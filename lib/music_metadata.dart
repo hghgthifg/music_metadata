@@ -1,8 +1,7 @@
-/// Support for doing something awesome.
-///
-/// More dartdocs go here.
-library;
+/// Dart library to edit music metadata.
+library music_metadata;
 
-export 'src/music_metadata_base.dart';
+export 'src/parser.dart';
+export 'src/load.dart';
 
 // TODO: Export any libraries intended for clients of this package.

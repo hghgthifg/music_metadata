@@ -3,14 +3,15 @@ import 'package:test/test.dart';
 
 void main() {
   group('A group of tests', () {
-    final awesome = Awesome();
+    final parser = loadFromFile("file");
+    final metadata = parser.parse();
 
     setUp(() {
       // Additional setup goes here.
     });
 
     test('First Test', () {
-      expect(awesome.isAwesome, isTrue);
+      expect(metadata.title, isNull);
     });
   });
 }
