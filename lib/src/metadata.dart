@@ -35,5 +35,12 @@ class Metadata {
   /// Genre
   List<String>? genre;
 
+  // Cover
   CoverImage? cover;
+
+  // Comment
+  String? comment;
+
+  // The number of the track in the album
+  int? track;
 }

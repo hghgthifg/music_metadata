@@ -3,15 +3,17 @@ import 'package:test/test.dart';
 
 void main() {
   group('A group of tests', () {
-    final parser = loadFromFile("file");
-    final metadata = parser.parse();
-
     setUp(() {
       // Additional setup goes here.
     });
 
     test('First Test', () {
-      expect(metadata.title, isNull);
+      final parser = loadFromFile("test/sample/Piano Magic Motive.mp3");
+      final metadata = parser.parse();
+
+      print(metadata.title);
+
+      expect(metadata.title, "Piano Magic Motive");
     });
   });
 }
