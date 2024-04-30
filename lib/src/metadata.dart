@@ -1,4 +1,4 @@
-/// Here is the definition of some classes, which represents the metadata of a track.
+// Here is the definition of some classes, which represents the metadata of a track.
 
 import 'dart:core';
 import 'dart:typed_data';

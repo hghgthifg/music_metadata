@@ -1,4 +1,4 @@
-/// Parser is the tool to operate on metadata, such as reading and writing.
+// Parser is the tool to operate on metadata, such as reading and writing.
 
 import "./metadata.dart";
 
@@ -9,5 +9,6 @@ abstract class Parser {
     this.metadata = metadata;
   }
 
-  Metadata parse();
+  Metadata read();
+  void write(Metadata metadata);
 }

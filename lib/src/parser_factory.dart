@@ -1,4 +1,4 @@
-/// ParserFactory is a factory class to create specific parser instances.
+// ParserFactory is a factory class to create specific parser instances.
 
 import "dart:io";
 

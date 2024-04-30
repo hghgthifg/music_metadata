@@ -1,4 +1,5 @@
 import "dart:io";
+import "dart:typed_data";
 
 import "../metadata.dart";
 import "../parser.dart";
@@ -15,41 +16,44 @@ class ID3v1Parser extends Parser {
   ID3v1Parser(this.originalFile);
 
   @override
-  Metadata parse() {
+  Metadata read() {
     var metadata = Metadata();
+
+    if (!originalFile.existsSync()) {
+      throw "File does not exist";
+    }
 
     var length = originalFile.lengthSync();
 
-    // get the last 128 bytes of the file
+    // Get the last 128 bytes of the file
     var buffer = originalFile.readAsBytesSync().sublist(length - 128, length);
 
     // check if the file has an ID3v1 tag
     var tag = String.fromCharCodes(buffer.sublist(0, 3));
     if (tag != "TAG") {
-      print(tag);
       throw "Not an ID3v1 tag";
     }
 
-    // get the title
+    // Get the title
     var title = String.fromCharCodes(buffer.sublist(3, 33));
     metadata.title = title.trimTag();
 
-    // get the artist
+    // Get the artist
     var artist = String.fromCharCodes(buffer.sublist(33, 63));
     metadata.artist = artist.trimTag();
 
-    // get the album
+    // Get the album
     var album = String.fromCharCodes(buffer.sublist(63, 93));
     metadata.album = album.trimTag();
 
-    // get the year
+    // Get the year
     var year = String.fromCharCodes(buffer.sublist(93, 97));
     metadata.year =
         (year.trimTag() != null) ? int.tryParse(year.trimTag()!.trim()) : null;
 
-    // get the comment and the track number
-    // if type is 0, meaning the comment is 30 characters long
-    // if type is 1, meaning the comment is 28 characters long, and the track number is in the 126th byte
+    // Get the comment and the track number
+    // If type is 0, it means the comment is 30 characters long
+    // If type is 1, it means the comment is 28 characters long, and the track number is in the 126th byte
     String? comment;
     int? track;
     var type = buffer[125];
@@ -63,16 +67,67 @@ class ID3v1Parser extends Parser {
     metadata.comment = comment?.trimTag();
     metadata.track = track;
 
-    // get the genre
+    // Get the genre
     var genreCode = buffer[127];
     if (genreCode != 255) {
       metadata.genre = <String>[];
       metadata.genre?.add(genres[genreCode]);
     }
 
-    // TODO implement genre parsing
+    this.metadata = metadata;
 
     return metadata;
+  }
+
+  @override
+  void write(Metadata metadata) {
+    var buffer = Uint8List(128);
+
+    buffer.setRange(0, 3, Uint8List.fromList("TAG".codeUnits)); // TAG
+
+    void setMetadataField(String? field, int start, int end) {
+      field ??= '';
+      // Ensure the string does not exceed the allocated buffer range
+      String truncatedField =
+          field.length > end - start ? field.substring(0, end - start) : field;
+
+      truncatedField = truncatedField.padRight(end - start, '\u0000');
+
+      // Convert to bytes and write to buffer
+      buffer.setRange(start, end, Uint8List.fromList(truncatedField.codeUnits));
+    }
+
+    setMetadataField(metadata.title, 3, 33); // Title
+    setMetadataField(metadata.artist, 33, 63); // Artist
+    setMetadataField(metadata.album, 63, 93); // Album
+    setMetadataField(metadata.year.toString(), 93, 97); // Year
+    // Note: If the comment is longer than 28 characters and the track number exists, it will be cut into 28 characters.
+    setMetadataField(metadata.comment, 97, 127); // Comment
+
+    if (metadata.track != null) {
+      buffer[125] = 0; // type 1
+      buffer[126] = metadata.track!; // track number
+    } else {
+      buffer[125] = 1; // type 0
+    }
+
+    int genreIndex = genres.indexOf(metadata.genre?[0] ?? '');
+    buffer[127] = genreIndex >= 0 && genreIndex < 128 ? genreIndex : 255;
+
+    // Check if "TAG" exists at the end of the file; if not, write the entire tag
+    var length = originalFile.lengthSync();
+    var lastBytes =
+        originalFile.readAsBytesSync().sublist(length - 128, length);
+    var tag = String.fromCharCodes(lastBytes.sublist(0, 3));
+    if (tag != "TAG") {
+      originalFile.writeAsBytesSync(buffer);
+      return;
+    } else {
+      originalFile.writeAsBytesSync(
+          originalFile.readAsBytesSync().sublist(0, length - 128) + buffer);
+    }
+
+    return;
   }
 
   static const genres = [
